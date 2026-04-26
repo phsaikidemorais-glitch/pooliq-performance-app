@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Cadastro - PoolIQ{% endblock %}
+
+{% block content %}
+    <div class="title">PoolIQ</div>
+    <div class="subtitle">Crie sua conta</div>
+
+    <div class="form-box">
+        <form method="POST">
+            <input class="input" type="text" name="username" placeholder="Nome de usuário" required>
+            <input class="input" type="email" name="email" placeholder="Seu email" required>
+            <input class="input" type="password" name="password" placeholder="Sua senha" required>
+            <button class="btn" type="submit">Cadastrar</button>
+        </form>
+
+        <p style="margin-top:18px;">
+            Já tem conta?
+            <a class="small-link" href="{{ url_for('login') }}">Fazer login</a>
+        </p>
+    </div>
+{% endblock %}

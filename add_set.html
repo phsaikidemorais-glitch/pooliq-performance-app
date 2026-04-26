@@ -1,0 +1,743 @@
+{% extends "base.html" %}
+
+{% block title %}Adicionar Série - PoolIQ{% endblock %}
+
+{% block content %}
+<style>
+    .premium-wrap {
+        max-width: 1040px;
+        margin: 0 auto;
+    }
+
+    .flow-shell {
+        background:
+            radial-gradient(circle at top left, rgba(255,255,255,0.07), transparent 30%),
+            linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.05));
+        border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 30px;
+        padding: 26px;
+        box-shadow: 0 24px 50px rgba(0,0,0,0.24);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .flow-shell::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+            radial-gradient(circle at 15% 10%, rgba(255,255,255,0.06), transparent 20%),
+            radial-gradient(circle at 80% 0%, rgba(95,168,255,0.10), transparent 25%);
+        opacity: 0.8;
+    }
+
+    .flow-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .step-block {
+        border-top: 1px solid rgba(255,255,255,0.06);
+        padding-top: 22px;
+        margin-top: 22px;
+    }
+
+    .step-block:first-child {
+        border-top: none;
+        padding-top: 0;
+        margin-top: 0;
+    }
+
+    .step-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+
+    .step-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--gold);
+    }
+
+    .step-index {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(240,199,94,0.14);
+        border: 1px solid rgba(240,199,94,0.26);
+        color: #ffe9a8;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .step-copy {
+        color: var(--text-soft);
+        font-size: 15px;
+        line-height: 1.6;
+        margin: 0 0 14px;
+    }
+
+    .step-hint {
+        color: var(--text-muted);
+        font-size: 13px;
+        line-height: 1.5;
+        margin-top: 8px;
+    }
+
+    .choice-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+    }
+
+    .choice-btn {
+        appearance: none;
+        width: 100%;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.05);
+        color: white;
+        border-radius: 20px;
+        padding: 16px 14px;
+        cursor: pointer;
+        transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+        text-align: left;
+        min-height: 84px;
+    }
+
+    .choice-btn:hover {
+        transform: translateY(-1px);
+        background: rgba(255,255,255,0.08);
+        border-color: rgba(240,199,94,0.28);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+    }
+
+    .choice-btn.active {
+        background: linear-gradient(135deg, rgba(240,199,94,0.18), rgba(240,199,94,0.06));
+        border-color: rgba(240,199,94,0.62);
+        box-shadow: 0 0 0 1px rgba(240,199,94,0.16) inset, 0 10px 26px rgba(0,0,0,0.18);
+    }
+
+    .choice-title {
+        font-size: 16px;
+        font-weight: 800;
+        margin-bottom: 6px;
+        line-height: 1.1;
+    }
+
+    .choice-sub {
+        font-size: 12px;
+        color: #bbcaee;
+        line-height: 1.45;
+        font-weight: 700;
+    }
+
+    .selection-bar {
+        margin-top: 18px;
+        padding: 16px 18px;
+        border-radius: 20px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: #dbe5ff;
+        font-size: 15px;
+        line-height: 1.55;
+    }
+
+    .selection-bar strong {
+        color: white;
+    }
+
+    .curtain {
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        transform: translateY(-8px);
+        transition:
+            max-height 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+            opacity 0.35s ease,
+            transform 0.35s ease,
+            margin-top 0.35s ease;
+        margin-top: 0;
+    }
+
+    .curtain.open {
+        max-height: 1200px;
+        opacity: 1;
+        transform: translateY(0);
+        margin-top: 16px;
+    }
+
+    .distance-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+        gap: 10px;
+    }
+
+    .distance-btn {
+        appearance: none;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.05);
+        color: white;
+        border-radius: 18px;
+        padding: 16px 10px;
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: 800;
+        transition: 0.22s ease;
+    }
+
+    .distance-btn:hover {
+        background: rgba(255,255,255,0.08);
+        border-color: rgba(240,199,94,0.28);
+    }
+
+    .distance-btn.active {
+        background: linear-gradient(135deg, rgba(240,199,94,0.20), rgba(240,199,94,0.07));
+        border-color: rgba(240,199,94,0.7);
+        color: #fff5d0;
+        box-shadow: 0 0 0 1px rgba(240,199,94,0.16) inset;
+    }
+
+    .time-composer {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 14px;
+    }
+
+    .time-box {
+        display: grid;
+        gap: 8px;
+    }
+
+    .time-box label,
+    .field-label {
+        display: block;
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        color: var(--gold);
+    }
+
+    .time-separator {
+        font-size: 28px;
+        font-weight: 800;
+        color: rgba(255,255,255,0.68);
+        padding-top: 18px;
+        text-align: center;
+    }
+
+    .data-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .data-grid .full {
+        grid-column: 1 / -1;
+    }
+
+    .helper-box {
+        margin-top: 14px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--text-soft);
+    }
+
+    .helper-box strong {
+        color: white;
+    }
+
+    .helper-mini {
+        margin-top: 8px;
+        font-size: 13px;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    .preview-pill {
+        margin-top: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border-radius: 999px;
+        padding: 10px 14px;
+        background: rgba(95,168,255,0.10);
+        border: 1px solid rgba(95,168,255,0.22);
+        color: #ddecff;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .preview-pill strong {
+        color: white;
+    }
+
+    .submit-wrap {
+        margin-top: 20px;
+    }
+
+    .save-btn {
+        width: 100%;
+        padding: 18px;
+        border: none;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #f0c75e, #dfb64f);
+        color: #08152f;
+        font-size: 18px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: 0.22s ease;
+        box-shadow: 0 18px 28px rgba(223,182,79,0.18);
+    }
+
+    .save-btn:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.02);
+    }
+
+    .save-note {
+        margin-top: 10px;
+        text-align: center;
+        font-size: 13px;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    @media (max-width: 860px) {
+        .data-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .time-composer {
+            grid-template-columns: 1fr;
+        }
+
+        .time-separator {
+            display: none;
+        }
+    }
+</style>
+
+<div class="premium-wrap">
+    <div class="topbar">
+        <div>
+            <div class="title">Adicionar série</div>
+            <div class="subtitle">
+                Sessão {{ swim_session.session_date }}{% if swim_session.goal %} · {{ swim_session.goal }}{% endif %}
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="{{ url_for('session_detail', session_id=swim_session.id) }}">Voltar para sessão</a>
+            <a href="{{ url_for('history') }}">Histórico</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+
+    <div class="flow-shell">
+        <div class="flow-content">
+            <form method="POST" id="addSetForm">
+                <input type="hidden" name="stroke" id="strokeInput" required>
+                <input type="hidden" name="course_type" id="courseInput" required>
+                <input type="hidden" name="distance_m" id="distanceInput" required>
+                <input type="hidden" name="avg_time_seconds" id="avgTimeSecondsInput" required>
+
+                <div class="step-block">
+                    <div class="step-header">
+                        <div class="step-title">
+                            <span class="step-index">1</span>
+                            Escolha o estilo
+                        </div>
+                    </div>
+                    <p class="step-copy">
+                        Primeiro definimos o bloco principal da série. As metragens só aparecem quando o estilo estiver escolhido.
+                    </p>
+
+                    <div class="choice-grid">
+                        <button type="button" class="choice-btn" data-stroke="livre">
+                            <div class="choice-title">Livre</div>
+                            <div class="choice-sub">50 · 100 · 200 · 400 · 800 · 1500</div>
+                        </button>
+
+                        <button type="button" class="choice-btn" data-stroke="costas">
+                            <div class="choice-title">Costas</div>
+                            <div class="choice-sub">50 · 100 · 200</div>
+                        </button>
+
+                        <button type="button" class="choice-btn" data-stroke="peito">
+                            <div class="choice-title">Peito</div>
+                            <div class="choice-sub">50 · 100 · 200</div>
+                        </button>
+
+                        <button type="button" class="choice-btn" data-stroke="borboleta">
+                            <div class="choice-title">Borboleta</div>
+                            <div class="choice-sub">50 · 100 · 200</div>
+                        </button>
+
+                        <button type="button" class="choice-btn" data-stroke="medley">
+                            <div class="choice-title">Medley</div>
+                            <div class="choice-sub">100 · 200 · 400</div>
+                        </button>
+
+                        <button type="button" class="choice-btn" data-stroke="perna">
+                            <div class="choice-title">Perna</div>
+                            <div class="choice-sub">25 · 50 · 100 · 200 · 400</div>
+                        </button>
+
+                        <button type="button" class="choice-btn" data-stroke="pull">
+                            <div class="choice-title">Pull</div>
+                            <div class="choice-sub">50 · 100 · 200 · 400 · 800</div>
+                        </button>
+
+                        <button type="button" class="choice-btn" data-stroke="drill">
+                            <div class="choice-title">Drill</div>
+                            <div class="choice-sub">25 · 50 · 75 · 100 · 150 · 200</div>
+                        </button>
+
+                        <button type="button" class="choice-btn" data-stroke="outro">
+                            <div class="choice-title">Outro</div>
+                            <div class="choice-sub">25 · 50 · 100 · 200 · 400</div>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="step-block">
+                    <div class="step-header">
+                        <div class="step-title">
+                            <span class="step-index">2</span>
+                            Escolha a piscina
+                        </div>
+                    </div>
+                    <p class="step-copy">
+                        O tipo de piscina muda completamente a leitura do bloco. Guarde isso já certo desde o cadastro.
+                    </p>
+
+                    <div class="choice-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+                        <button type="button" class="choice-btn" data-course="25m">
+                            <div class="choice-title">Piscina 25m</div>
+                            <div class="choice-sub">Curta em metros</div>
+                        </button>
+
+                        <button type="button" class="choice-btn" data-course="50m">
+                            <div class="choice-title">Piscina 50m</div>
+                            <div class="choice-sub">Longa em metros</div>
+                        </button>
+
+                        <button type="button" class="choice-btn" data-course="25yd">
+                            <div class="choice-title">Piscina 25yd</div>
+                            <div class="choice-sub">Curta em jardas</div>
+                        </button>
+                    </div>
+
+                    <div class="selection-bar" id="selectionSummary">
+                        Escolha o estilo e a piscina para liberar as metragens disponíveis.
+                    </div>
+                </div>
+
+                <div class="step-block">
+                    <div class="step-header">
+                        <div class="step-title">
+                            <span class="step-index">3</span>
+                            Escolha a metragem
+                        </div>
+                    </div>
+
+                    <div id="distanceCurtain" class="curtain">
+                        <div id="distanceContainer" class="distance-grid"></div>
+                        <div class="step-hint">
+                            As metragens são filtradas para evitar erro de preenchimento e manter a lógica da prova mais limpa.
+                        </div>
+                    </div>
+
+                    <div id="distanceLocked" class="helper-box">
+                        As opções vão aparecer automaticamente quando estilo e piscina forem escolhidos.
+                    </div>
+                </div>
+
+                <div class="step-block">
+                    <div class="step-header">
+                        <div class="step-title">
+                            <span class="step-index">4</span>
+                            Monte a série
+                        </div>
+                    </div>
+
+                    <div id="dataCurtain" class="curtain">
+                        <div class="data-grid">
+                            <div>
+                                <label class="field-label" for="reps">Repetições</label>
+                                <input class="input" type="number" id="reps" name="reps" min="1" placeholder="Ex: 10" required>
+                                <div class="helper-mini">Número total de saídas. Ex.: 10x100 = 10 repetições.</div>
+                            </div>
+
+                            <div>
+                                <label class="field-label" for="rest_seconds">Descanso entre repetições</label>
+                                <input class="input" type="number" id="rest_seconds" name="rest_seconds" min="0" placeholder="Ex: 20" required>
+                                <div class="helper-mini">Descanso real entre reps, em segundos. Ex.: 15, 20, 30.</div>
+                            </div>
+
+                            <div class="full">
+                                <label class="field-label">Tempo médio por repetição</label>
+                                <div class="time-composer">
+                                    <div class="time-box">
+                                        <label for="timeMinutes">Minutos</label>
+                                        <input class="input" type="number" id="timeMinutes" min="0" placeholder="0">
+                                    </div>
+
+                                    <div class="time-separator">:</div>
+
+                                    <div class="time-box">
+                                        <label for="timeSeconds">Segundos</label>
+                                        <input class="input" type="number" id="timeSeconds" min="0" max="59" placeholder="Ex: 58" required>
+                                    </div>
+
+                                    <div class="time-separator">.</div>
+
+                                    <div class="time-box">
+                                        <label for="timeTenths">Décimos</label>
+                                        <input class="input" type="number" id="timeTenths" min="0" max="9" placeholder="Ex: 6">
+                                    </div>
+                                </div>
+
+                                <div class="helper-box">
+                                    <strong>Como preencher:</strong><br>
+                                    Para uma repetição de <strong>58.6</strong>, use <strong>0 min · 58 seg · 6 décimos</strong>.<br>
+                                    Para <strong>1:02.8</strong>, use <strong>1 min · 02 seg · 8 décimos</strong>.
+                                </div>
+
+                                <div class="preview-pill" id="timePreview">
+                                    Tempo salvo: <strong>--</strong>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="field-label" for="effort_rpe">RPE / esforço percebido</label>
+                                <input class="input" type="number" id="effort_rpe" name="effort_rpe" min="1" max="10" placeholder="1 a 10" required>
+                                <div class="helper-mini">Leitura subjetiva da dureza da série. Ex.: 7 = forte controlado.</div>
+                            </div>
+
+                            <div class="full">
+                                <label class="field-label" for="notes">Observações da série</label>
+                                <textarea
+                                    class="input"
+                                    id="notes"
+                                    name="notes"
+                                    rows="4"
+                                    placeholder="Ex.: saiu controlado, perdeu água no fim, segurou stroke count, faltou pressão de perna"
+                                ></textarea>
+                                <div class="helper-mini">
+                                    Fale como um nadador fala: ritmo, sensação de água, queda técnica, stroke count, pressão, saída, braçada.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="submit-wrap">
+                    <button class="save-btn" type="submit">Salvar série</button>
+                    <div class="save-note">
+                        O sistema salva a série de forma padronizada para gerar pace, carga, leitura automática e comparação futura.
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const distanceMap = {
+        livre: [50, 100, 200, 400, 800, 1500],
+        costas: [50, 100, 200],
+        peito: [50, 100, 200],
+        borboleta: [50, 100, 200],
+        medley: [100, 200, 400],
+        perna: [25, 50, 100, 200, 400],
+        pull: [50, 100, 200, 400, 800],
+        drill: [25, 50, 75, 100, 150, 200],
+        outro: [25, 50, 100, 200, 400]
+    };
+
+    const strokeButtons = document.querySelectorAll("[data-stroke]");
+    const courseButtons = document.querySelectorAll("[data-course]");
+    const distanceContainer = document.getElementById("distanceContainer");
+
+    const strokeInput = document.getElementById("strokeInput");
+    const courseInput = document.getElementById("courseInput");
+    const distanceInput = document.getElementById("distanceInput");
+    const avgTimeSecondsInput = document.getElementById("avgTimeSecondsInput");
+
+    const selectionSummary = document.getElementById("selectionSummary");
+    const distanceCurtain = document.getElementById("distanceCurtain");
+    const distanceLocked = document.getElementById("distanceLocked");
+    const dataCurtain = document.getElementById("dataCurtain");
+
+    const timeMinutes = document.getElementById("timeMinutes");
+    const timeSeconds = document.getElementById("timeSeconds");
+    const timeTenths = document.getElementById("timeTenths");
+    const timePreview = document.getElementById("timePreview");
+
+    let selectedStroke = "";
+    let selectedCourse = "";
+    let selectedDistance = "";
+
+    function capitalizeWord(text) {
+        if (!text) return "";
+        return text.charAt(0).toUpperCase() + text.slice(1);
+    }
+
+    function updateSummary() {
+        if (!selectedStroke && !selectedCourse) {
+            selectionSummary.textContent = "Escolha o estilo e a piscina para liberar as metragens disponíveis.";
+            return;
+        }
+
+        const strokeLabel = selectedStroke ? capitalizeWord(selectedStroke) : "—";
+        const courseLabel = selectedCourse ? selectedCourse : "—";
+        const distanceLabel = selectedDistance ? `${selectedDistance}` : "—";
+
+        selectionSummary.innerHTML = `
+            <strong>Seleção atual:</strong> ${strokeLabel} · ${courseLabel} · ${distanceLabel}
+        `;
+    }
+
+    function maybeOpenDistanceCurtain() {
+        if (selectedStroke && selectedCourse) {
+            distanceCurtain.classList.add("open");
+            distanceLocked.style.display = "none";
+        } else {
+            distanceCurtain.classList.remove("open");
+            distanceLocked.style.display = "block";
+        }
+    }
+
+    function maybeOpenDataCurtain() {
+        if (selectedStroke && selectedCourse && selectedDistance) {
+            dataCurtain.classList.add("open");
+        } else {
+            dataCurtain.classList.remove("open");
+        }
+    }
+
+    function renderDistances() {
+        distanceInput.value = "";
+        selectedDistance = "";
+        maybeOpenDataCurtain();
+
+        if (!selectedStroke || !selectedCourse) {
+            distanceContainer.innerHTML = "";
+            maybeOpenDistanceCurtain();
+            updateSummary();
+            return;
+        }
+
+        const distances = distanceMap[selectedStroke] || [];
+
+        distanceContainer.innerHTML = "";
+
+        distances.forEach(distance => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "distance-btn";
+            btn.textContent = distance;
+            btn.dataset.distance = distance;
+
+            btn.addEventListener("click", function () {
+                document.querySelectorAll(".distance-btn").forEach(item => item.classList.remove("active"));
+                this.classList.add("active");
+                selectedDistance = this.dataset.distance;
+                distanceInput.value = selectedDistance;
+                updateSummary();
+                maybeOpenDataCurtain();
+            });
+
+            distanceContainer.appendChild(btn);
+        });
+
+        maybeOpenDistanceCurtain();
+        updateSummary();
+    }
+
+    function updateTimePreview() {
+        const min = parseInt(timeMinutes.value || "0", 10);
+        const sec = parseInt(timeSeconds.value || "0", 10);
+        const tenth = parseInt(timeTenths.value || "0", 10);
+
+        if (Number.isNaN(sec) || sec < 0 || sec > 59) {
+            avgTimeSecondsInput.value = "";
+            timePreview.innerHTML = 'Tempo salvo: <strong>--</strong>';
+            return;
+        }
+
+        const totalSeconds = (min * 60) + sec + (tenth / 10);
+        avgTimeSecondsInput.value = totalSeconds;
+
+        const secPadded = String(sec).padStart(2, "0");
+        const previewText = `${min}:${secPadded}.${tenth}`;
+
+        timePreview.innerHTML = `Tempo salvo: <strong>${previewText}</strong> <span style="opacity:.78;">(${totalSeconds.toFixed(1)}s)</span>`;
+    }
+
+    strokeButtons.forEach(btn => {
+        btn.addEventListener("click", function () {
+            strokeButtons.forEach(item => item.classList.remove("active"));
+            this.classList.add("active");
+
+            selectedStroke = this.dataset.stroke;
+            strokeInput.value = selectedStroke;
+
+            renderDistances();
+        });
+    });
+
+    courseButtons.forEach(btn => {
+        btn.addEventListener("click", function () {
+            courseButtons.forEach(item => item.classList.remove("active"));
+            this.classList.add("active");
+
+            selectedCourse = this.dataset.course;
+            courseInput.value = selectedCourse;
+
+            renderDistances();
+        });
+    });
+
+    [timeMinutes, timeSeconds, timeTenths].forEach(input => {
+        input.addEventListener("input", updateTimePreview);
+    });
+
+    document.getElementById("addSetForm").addEventListener("submit", function (event) {
+        if (!strokeInput.value || !courseInput.value || !distanceInput.value) {
+            event.preventDefault();
+            alert("Escolha estilo, piscina e metragem antes de salvar.");
+            return;
+        }
+
+        if (!avgTimeSecondsInput.value) {
+            event.preventDefault();
+            alert("Preencha o tempo médio corretamente.");
+        }
+    });
+
+    updateSummary();
+    updateTimePreview();
+</script>
+{% endblock %}

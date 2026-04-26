@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Histórico - PoolIQ{% endblock %}
+
+{% block content %}
+    <div class="topbar">
+        <div>
+            <div class="title">Histórico</div>
+            <div class="subtitle">Sessões registradas</div>
+        </div>
+
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('new_session') }}">Nova sessão</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+
+    <div class="hero-panel">
+        <div class="hero-kicker">Linha do tempo</div>
+        <h2 class="hero-title">Cada sessão guardada com contexto, prontidão e continuidade.</h2>
+        <p class="hero-description">
+            Aqui o usuário enxerga a evolução do processo, abre detalhes da sessão e continua completando a leitura com novas séries.
+        </p>
+    </div>
+
+    {% if sessions_data %}
+        <div class="grid">
+            {% for item in sessions_data %}
+                <div class="card wide history-card">
+                    <div class="set-card-top">
+                        <div>
+                            <div class="label">Sessão</div>
+                            <h3 class="set-main-title">{{ item.session_date }}</h3>
+                            <div class="subtext">
+                                {% if item.goal %}{{ item.goal }}{% else %}Sem objetivo informado{% endif %}
+                            </div>
+                        </div>
+
+                        <span class="pill {% if item.sets_count > 0 %}good{% else %}warn{% endif %}">
+                            {{ item.sets_count }} série{% if item.sets_count != 1 %}s{% endif %}
+                        </span>
+                    </div>
+
+                    <div class="meta-list">
+                        <div class="meta-row">
+                            <div class="meta-key">Energia</div>
+                            <div class="meta-value">{{ item.energy_level or "Não informada" }}</div>
+                        </div>
+
+                        <div class="meta-row">
+                            <div class="meta-key">Sono</div>
+                            <div class="meta-value">{{ item.sleep_hours or "Não informado" }}</div>
+                        </div>
+
+                        <div class="meta-row">
+                            <div class="meta-key">Sensibilidade</div>
+                            <div class="meta-value">{{ item.pain_area or "Não informada" }}</div>
+                        </div>
+
+                        <div class="meta-row">
+                            <div class="meta-key">Motivação</div>
+                            <div class="meta-value">{{ item.motivation_level or "Não informada" }}</div>
+                        </div>
+                    </div>
+
+                    <div class="actions-row">
+                        <a class="action-btn" href="{{ url_for('session_detail', session_id=item.id) }}">Ver sessão</a>
+                        <a class="ghost-btn" href="{{ url_for('add_set', session_id=item.id) }}">Adicionar série</a>
+
+                        <form method="POST" action="{{ url_for('delete_session', session_id=item.id) }}" onsubmit="return confirmDelete('Apagar essa sessão e todas as séries vinculadas?');">
+                            <button class="danger-btn" type="submit">Apagar sessão</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card full">
+            <div class="label">Histórico</div>
+            <p class="text">Você ainda não registrou nenhuma sessão.</p>
+        </div>
+    {% endif %}
+{% endblock %}

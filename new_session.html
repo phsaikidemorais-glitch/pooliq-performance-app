@@ -1,0 +1,621 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Sessão - PoolIQ{% endblock %}
+
+{% block content %}
+<style>
+    .cycle-wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .cycle-shell {
+        background:
+            radial-gradient(circle at top left, rgba(255,255,255,0.07), transparent 30%),
+            linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.05));
+        border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 30px;
+        padding: 28px;
+        box-shadow: 0 24px 50px rgba(0,0,0,0.24);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cycle-shell::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+            radial-gradient(circle at 15% 10%, rgba(255,255,255,0.05), transparent 20%),
+            radial-gradient(circle at 88% 0%, rgba(95,168,255,0.10), transparent 26%);
+        opacity: 0.85;
+    }
+
+    .cycle-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .step-block {
+        border-top: 1px solid rgba(255,255,255,0.06);
+        padding-top: 22px;
+        margin-top: 22px;
+    }
+
+    .step-block:first-child {
+        border-top: none;
+        padding-top: 0;
+        margin-top: 0;
+    }
+
+    .step-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--gold);
+        margin-bottom: 12px;
+    }
+
+    .step-index {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(240,199,94,0.14);
+        border: 1px solid rgba(240,199,94,0.26);
+        color: #ffe9a8;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .step-copy {
+        color: var(--text-soft);
+        font-size: 15px;
+        line-height: 1.65;
+        margin: 0 0 16px;
+    }
+
+    .choice-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+    }
+
+    .choice-btn {
+        appearance: none;
+        width: 100%;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.05);
+        color: white;
+        border-radius: 20px;
+        padding: 16px 14px;
+        cursor: pointer;
+        transition: 0.22s ease;
+        text-align: left;
+        min-height: 88px;
+    }
+
+    .choice-btn:hover {
+        transform: translateY(-1px);
+        background: rgba(255,255,255,0.08);
+        border-color: rgba(240,199,94,0.28);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+    }
+
+    .choice-btn.active {
+        background: linear-gradient(135deg, rgba(240,199,94,0.18), rgba(240,199,94,0.06));
+        border-color: rgba(240,199,94,0.62);
+        box-shadow: 0 0 0 1px rgba(240,199,94,0.16) inset;
+    }
+
+    .choice-title {
+        font-size: 16px;
+        font-weight: 800;
+        margin-bottom: 6px;
+        line-height: 1.1;
+    }
+
+    .choice-sub {
+        font-size: 12px;
+        color: #bbcaee;
+        line-height: 1.45;
+        font-weight: 700;
+    }
+
+    .curtain {
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        transform: translateY(-8px);
+        transition:
+            max-height 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+            opacity 0.35s ease,
+            transform 0.35s ease,
+            margin-top 0.35s ease;
+        margin-top: 0;
+    }
+
+    .curtain.open {
+        max-height: 1600px;
+        opacity: 1;
+        transform: translateY(0);
+        margin-top: 16px;
+    }
+
+    .selection-bar {
+        margin-top: 18px;
+        padding: 16px 18px;
+        border-radius: 20px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: #dbe5ff;
+        font-size: 15px;
+        line-height: 1.55;
+    }
+
+    .selection-bar strong {
+        color: white;
+    }
+
+    .data-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .data-grid .full {
+        grid-column: 1 / -1;
+    }
+
+    .field-label {
+        display: block;
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        color: var(--gold);
+        margin-bottom: 8px;
+    }
+
+    .helper-mini {
+        margin-top: 8px;
+        font-size: 13px;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    .save-btn {
+        width: 100%;
+        padding: 18px;
+        border: none;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #f0c75e, #dfb64f);
+        color: #08152f;
+        font-size: 18px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: 0.22s ease;
+        box-shadow: 0 18px 28px rgba(223,182,79,0.18);
+        margin-top: 24px;
+    }
+
+    .save-btn:hover {
+        transform: translateY(-1px);
+    }
+
+    @media (max-width: 860px) {
+        .data-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="cycle-wrap">
+    <div class="topbar">
+        <div>
+            <div class="title">Nova sessão</div>
+            <div class="subtitle">Contexto do ciclo + estado do atleta + direção da sessão</div>
+        </div>
+
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('history') }}">Histórico</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+
+    <div class="cycle-shell">
+        <div class="cycle-content">
+            <form method="POST" id="newSessionForm">
+                <input type="hidden" name="cycle_model" id="cycleModelInput">
+                <input type="hidden" name="phase_focus" id="phaseFocusInput">
+                <input type="hidden" name="load_profile" id="loadProfileInput">
+                <input type="hidden" name="energy_level" id="energyInput">
+                <input type="hidden" name="motivation_level" id="motivationInput">
+                <input type="hidden" name="pain_area" id="painAreaInput">
+
+                <div class="step-block">
+                    <div class="step-title">
+                        <span class="step-index">1</span>
+                        Estrutura do ciclo
+                    </div>
+                    <p class="step-copy">
+                        Escolha o modelo que mais parece com o jeito que você ou seu treinador organizam a temporada. O sistema usa isso como contexto, mas sem engessar sua metodologia.
+                    </p>
+
+                    <div class="choice-grid">
+                        <button type="button" class="choice-btn" data-cycle-model="tradicional">
+                            <div class="choice-title">Tradicional</div>
+                            <div class="choice-sub">Base, construção, especificidade, competição</div>
+                        </button>
+
+                        <button type="button" class="choice-btn" data-cycle-model="sprint">
+                            <div class="choice-title">Sprint</div>
+                            <div class="choice-sub">Velocidade, potência, bloco curto e explosivo</div>
+                        </button>
+
+                        <button type="button" class="choice-btn" data-cycle-model="fundo">
+                            <div class="choice-title">Fundo</div>
+                            <div class="choice-sub">Sustentação, volume, ritmo e densidade</div>
+                        </button>
+
+                        <button type="button" class="choice-btn" data-cycle-model="college">
+                            <div class="choice-title">College / School</div>
+                            <div class="choice-sub">Calendário competitivo e ajustes frequentes</div>
+                        </button>
+
+                        <button type="button" class="choice-btn" data-cycle-model="clube">
+                            <div class="choice-title">Clube</div>
+                            <div class="choice-sub">Estrutura contínua com blocos variados</div>
+                        </button>
+
+                        <button type="button" class="choice-btn" data-cycle-model="personalizado">
+                            <div class="choice-title">Personalizado</div>
+                            <div class="choice-sub">Seu próprio vocabulário de ciclo e fase</div>
+                        </button>
+                    </div>
+
+                    <div class="selection-bar" id="cycleSummary">
+                        Escolha a estrutura do ciclo para liberar o contexto refinado da fase.
+                    </div>
+                </div>
+
+                <div class="step-block">
+                    <div class="step-title">
+                        <span class="step-index">2</span>
+                        Fase atual do jeito que você usa
+                    </div>
+
+                    <div id="cycleCurtain" class="curtain">
+                        <div class="data-grid">
+                            <div class="full">
+                                <label class="field-label" for="phase_name">Nome da fase atual</label>
+                                <input class="input" type="text" id="phase_name" name="phase_name" placeholder="Ex.: Pace Race, Base 2, Pré-competitivo, Quality Week">
+                                <div class="helper-mini">
+                                    Aqui você escreve a fase com o nome que realmente usa no seu ambiente de treino.
+                                </div>
+                            </div>
+
+                            <div class="full">
+                                <label class="field-label">Foco principal da fase</label>
+                                <div class="choice-grid" id="phaseFocusGrid">
+                                    <button type="button" class="choice-btn" data-phase-focus="tecnica">
+                                        <div class="choice-title">Técnica</div>
+                                        <div class="choice-sub">Eficiência, alinhamento, sensação de água</div>
+                                    </button>
+
+                                    <button type="button" class="choice-btn" data-phase-focus="aerobio">
+                                        <div class="choice-title">Aeróbio</div>
+                                        <div class="choice-sub">Base, sustentação e consistência</div>
+                                    </button>
+
+                                    <button type="button" class="choice-btn" data-phase-focus="forca">
+                                        <div class="choice-title">Força específica</div>
+                                        <div class="choice-sub">Pressão de água, tração, sustentação</div>
+                                    </button>
+
+                                    <button type="button" class="choice-btn" data-phase-focus="velocidade">
+                                        <div class="choice-title">Velocidade</div>
+                                        <div class="choice-sub">Rápido, curto, preciso</div>
+                                    </button>
+
+                                    <button type="button" class="choice-btn" data-phase-focus="ritmo_prova">
+                                        <div class="choice-title">Ritmo de prova</div>
+                                        <div class="choice-sub">Pace alvo, repetição específica</div>
+                                    </button>
+
+                                    <button type="button" class="choice-btn" data-phase-focus="potencia">
+                                        <div class="choice-title">Potência</div>
+                                        <div class="choice-sub">Explosão e produção curta</div>
+                                    </button>
+
+                                    <button type="button" class="choice-btn" data-phase-focus="tolerancia">
+                                        <div class="choice-title">Tolerância</div>
+                                        <div class="choice-sub">Sustentar sob fadiga</div>
+                                    </button>
+
+                                    <button type="button" class="choice-btn" data-phase-focus="recuperacao">
+                                        <div class="choice-title">Recuperação</div>
+                                        <div class="choice-sub">Alívio de carga e frescor</div>
+                                    </button>
+
+                                    <button type="button" class="choice-btn" data-phase-focus="controle">
+                                        <div class="choice-title">Controle</div>
+                                        <div class="choice-sub">Sessão produtiva sem extremos</div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="full">
+                                <label class="field-label">Perfil de carga da fase</label>
+                                <div class="choice-grid" id="loadProfileGrid">
+                                    <button type="button" class="choice-btn" data-load-profile="volume_alto">
+                                        <div class="choice-title">Volume alto</div>
+                                        <div class="choice-sub">Mais metragem, menos agressividade</div>
+                                    </button>
+
+                                    <button type="button" class="choice-btn" data-load-profile="volume_moderado">
+                                        <div class="choice-title">Volume moderado</div>
+                                        <div class="choice-sub">Equilíbrio entre densidade e qualidade</div>
+                                    </button>
+
+                                    <button type="button" class="choice-btn" data-load-profile="volume_baixo">
+                                        <div class="choice-title">Volume baixo</div>
+                                        <div class="choice-sub">Sessões mais enxutas</div>
+                                    </button>
+
+                                    <button type="button" class="choice-btn" data-load-profile="intensidade_alta">
+                                        <div class="choice-title">Intensidade alta</div>
+                                        <div class="choice-sub">Menos volume, mais exigência específica</div>
+                                    </button>
+
+                                    <button type="button" class="choice-btn" data-load-profile="intensidade_moderada">
+                                        <div class="choice-title">Intensidade moderada</div>
+                                        <div class="choice-sub">Boa produção com controle</div>
+                                    </button>
+
+                                    <button type="button" class="choice-btn" data-load-profile="intensidade_baixa">
+                                        <div class="choice-title">Intensidade baixa</div>
+                                        <div class="choice-sub">Fase leve, ajuste fino ou recuperação</div>
+                                    </button>
+
+                                    <button type="button" class="choice-btn" data-load-profile="misto">
+                                        <div class="choice-title">Misto</div>
+                                        <div class="choice-sub">Sem perfil único dominante</div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="field-label" for="target_event">Prova-alvo</label>
+                                <input class="input" type="text" id="target_event" name="target_event" placeholder="Ex.: 100 livre, 200 costas, meeting estadual">
+                            </div>
+
+                            <div>
+                                <label class="field-label" for="weeks_to_race">Semanas até a prova</label>
+                                <input class="input" type="number" id="weeks_to_race" name="weeks_to_race" min="0" placeholder="Ex.: 5">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-block">
+                    <div class="step-title">
+                        <span class="step-index">3</span>
+                        Estado do atleta hoje
+                    </div>
+
+                    <div id="athleteCurtain" class="curtain">
+                        <div class="data-grid">
+                            <div class="full">
+                                <label class="field-label" for="session_date">Data da sessão</label>
+                                <input class="input" type="date" id="session_date" name="session_date" required>
+                            </div>
+
+                            <div class="full">
+                                <label class="field-label" for="goal">Objetivo da sessão</label>
+                                <input class="input" type="text" id="goal" name="goal" placeholder="Ex.: velocidade, técnica, ritmo de prova, recuperação">
+                            </div>
+
+                            <div class="full">
+                                <label class="field-label">Energia do dia</label>
+                                <div class="choice-grid" id="energyGrid">
+                                    <button type="button" class="choice-btn" data-energy="muito baixa">
+                                        <div class="choice-title">Muito baixa</div>
+                                        <div class="choice-sub">Corpo pesado, difícil responder</div>
+                                    </button>
+                                    <button type="button" class="choice-btn" data-energy="baixa">
+                                        <div class="choice-title">Baixa</div>
+                                        <div class="choice-sub">Dá para treinar, mas sem muita margem</div>
+                                    </button>
+                                    <button type="button" class="choice-btn" data-energy="média">
+                                        <div class="choice-title">Média</div>
+                                        <div class="choice-sub">Estado neutro e treinável</div>
+                                    </button>
+                                    <button type="button" class="choice-btn" data-energy="alta">
+                                        <div class="choice-title">Alta</div>
+                                        <div class="choice-sub">Boa resposta e boa sensação</div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="field-label" for="sleep_hours">Horas de sono</label>
+                                <input class="input" type="number" step="0.1" min="0" max="24" id="sleep_hours" name="sleep_hours" placeholder="Ex.: 7.5">
+                            </div>
+
+                            <div class="full">
+                                <label class="field-label">Motivação</label>
+                                <div class="choice-grid" id="motivationGrid">
+                                    <button type="button" class="choice-btn" data-motivation="muito baixa">
+                                        <div class="choice-title">Muito baixa</div>
+                                        <div class="choice-sub">Baixa disposição mental para treinar</div>
+                                    </button>
+                                    <button type="button" class="choice-btn" data-motivation="baixa">
+                                        <div class="choice-title">Baixa</div>
+                                        <div class="choice-sub">Treino possível, mas sem muita chama</div>
+                                    </button>
+                                    <button type="button" class="choice-btn" data-motivation="média">
+                                        <div class="choice-title">Média</div>
+                                        <div class="choice-sub">Disposição estável</div>
+                                    </button>
+                                    <button type="button" class="choice-btn" data-motivation="alta">
+                                        <div class="choice-title">Alta</div>
+                                        <div class="choice-sub">Boa vontade de performar</div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="full">
+                                <label class="field-label">Sensibilidade / dor</label>
+                                <div class="choice-grid" id="painGrid">
+                                    <button type="button" class="choice-btn" data-pain="nenhuma">
+                                        <div class="choice-title">Nenhuma</div>
+                                        <div class="choice-sub">Sem ponto de atenção relevante</div>
+                                    </button>
+                                    <button type="button" class="choice-btn" data-pain="ombro">
+                                        <div class="choice-title">Ombro</div>
+                                        <div class="choice-sub">Atenção em tração e recuperação</div>
+                                    </button>
+                                    <button type="button" class="choice-btn" data-pain="joelho">
+                                        <div class="choice-title">Joelho</div>
+                                        <div class="choice-sub">Cautela em perna e encaixe</div>
+                                    </button>
+                                    <button type="button" class="choice-btn" data-pain="costas">
+                                        <div class="choice-title">Costas</div>
+                                        <div class="choice-sub">Observar postura e alinhamento</div>
+                                    </button>
+                                    <button type="button" class="choice-btn" data-pain="outro">
+                                        <div class="choice-title">Outro</div>
+                                        <div class="choice-sub">Qualquer outro ponto sensível</div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="field-label" for="stiffness_level">Rigidez corporal</label>
+                                <input class="input" type="number" min="0" max="10" id="stiffness_level" name="stiffness_level" placeholder="0 a 10">
+                            </div>
+
+                            <div>
+                                <label class="field-label" for="shoulder_pain_level">Desconforto no ombro</label>
+                                <input class="input" type="number" min="0" max="10" id="shoulder_pain_level" name="shoulder_pain_level" placeholder="0 a 10">
+                            </div>
+
+                            <div class="full">
+                                <label class="field-label" for="notes">Observações gerais</label>
+                                <textarea
+                                    class="input"
+                                    id="notes"
+                                    name="notes"
+                                    rows="5"
+                                    placeholder="Ex.: água pesada, ombro sentindo na recuperação, perna bem encaixada, sensação boa de ritmo, cansado mas técnico"
+                                ></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="save-btn" type="submit">Salvar sessão</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const cycleModelInput = document.getElementById("cycleModelInput");
+    const phaseFocusInput = document.getElementById("phaseFocusInput");
+    const loadProfileInput = document.getElementById("loadProfileInput");
+    const energyInput = document.getElementById("energyInput");
+    const motivationInput = document.getElementById("motivationInput");
+    const painAreaInput = document.getElementById("painAreaInput");
+
+    const cycleSummary = document.getElementById("cycleSummary");
+    const cycleCurtain = document.getElementById("cycleCurtain");
+    const athleteCurtain = document.getElementById("athleteCurtain");
+
+    function bindChoiceGroup(selector, hiddenInput, callback = null) {
+        const buttons = document.querySelectorAll(selector);
+
+        buttons.forEach(button => {
+            button.addEventListener("click", function () {
+                buttons.forEach(item => item.classList.remove("active"));
+                this.classList.add("active");
+
+                const datasetKey = Object.keys(this.dataset)[0];
+                hiddenInput.value = this.dataset[datasetKey];
+
+                if (callback) callback(this.dataset[datasetKey]);
+            });
+        });
+    }
+
+    function updateCycleSummary() {
+        const model = cycleModelInput.value || "—";
+        const phaseFocus = phaseFocusInput.value || "—";
+        const loadProfile = loadProfileInput.value || "—";
+
+        cycleSummary.innerHTML = `
+            <strong>Contexto atual:</strong> modelo ${model} · foco ${phaseFocus} · carga ${loadProfile}
+        `;
+    }
+
+    function maybeOpenCycleCurtain() {
+        if (cycleModelInput.value) {
+            cycleCurtain.classList.add("open");
+        } else {
+            cycleCurtain.classList.remove("open");
+        }
+    }
+
+    function maybeOpenAthleteCurtain() {
+        if (cycleModelInput.value && phaseFocusInput.value && loadProfileInput.value) {
+            athleteCurtain.classList.add("open");
+        } else {
+            athleteCurtain.classList.remove("open");
+        }
+    }
+
+    bindChoiceGroup("[data-cycle-model]", cycleModelInput, () => {
+        maybeOpenCycleCurtain();
+        maybeOpenAthleteCurtain();
+        updateCycleSummary();
+    });
+
+    bindChoiceGroup("[data-phase-focus]", phaseFocusInput, () => {
+        maybeOpenAthleteCurtain();
+        updateCycleSummary();
+    });
+
+    bindChoiceGroup("[data-load-profile]", loadProfileInput, () => {
+        maybeOpenAthleteCurtain();
+        updateCycleSummary();
+    });
+
+    bindChoiceGroup("[data-energy]", energyInput);
+    bindChoiceGroup("[data-motivation]", motivationInput);
+    bindChoiceGroup("[data-pain]", painAreaInput);
+
+    document.getElementById("newSessionForm").addEventListener("submit", function (event) {
+        if (!cycleModelInput.value || !phaseFocusInput.value || !loadProfileInput.value) {
+            event.preventDefault();
+            alert("Defina o modelo do ciclo, o foco da fase e o perfil de carga antes de salvar.");
+            return;
+        }
+
+        if (!energyInput.value || !motivationInput.value || !painAreaInput.value) {
+            event.preventDefault();
+            alert("Defina energia, motivação e sensibilidade para dar contexto ao Coach Brain.");
+        }
+    });
+
+    updateCycleSummary();
+</script>
+{% endblock %}

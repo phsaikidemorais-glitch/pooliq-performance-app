@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+
+{% block title %}PoolIQ Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    .brain-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 18px;
+        margin-bottom: 18px;
+    }
+
+    .brain-panel {
+        display: grid;
+        gap: 16px;
+    }
+
+    .brain-subgrid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .brain-headline {
+        font-size: 34px;
+        line-height: 1.05;
+        font-weight: 800;
+        margin: 0 0 12px;
+        letter-spacing: -0.9px;
+    }
+
+    .brain-description {
+        font-size: 16px;
+        line-height: 1.7;
+        color: var(--text-soft);
+        margin: 0;
+    }
+
+    .brain-block {
+        padding: 18px;
+        border-radius: 22px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.04);
+    }
+
+    .brain-kicker {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--gold);
+        font-weight: 800;
+        margin-bottom: 10px;
+    }
+
+    .brain-main-set {
+        font-size: 28px;
+        line-height: 1.05;
+        font-weight: 800;
+        margin: 0 0 10px;
+        letter-spacing: -0.8px;
+    }
+
+    .brain-detail {
+        color: var(--text-main);
+        font-size: 16px;
+        line-height: 1.6;
+        margin: 0 0 8px;
+        font-weight: 700;
+    }
+
+    .brain-note {
+        color: var(--text-soft);
+        font-size: 14px;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    .brain-target {
+        display: grid;
+        gap: 14px;
+    }
+
+    .brain-target-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .brain-target-row:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .brain-target-label {
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.7px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+    }
+
+    .brain-target-value {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--text-main);
+        text-align: right;
+    }
+
+    @media (max-width: 980px) {
+        .brain-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .brain-subgrid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="topbar">
+    <div>
+        <div class="title">PoolIQ</div>
+        <div class="subtitle">Bem-vindo, {{ username }}</div>
+    </div>
+
+    <div class="nav-links">
+        <a href="{{ url_for('new_session') }}">Nova sessão</a>
+        <a href="{{ url_for('history') }}">Histórico</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+</div>
+
+<div class="hero-panel">
+    <div class="hero-kicker">Coach Brain</div>
+    <h2 class="hero-title">O sistema lê seu ciclo, seu estado e seu histórico antes de sugerir o treino do dia.</h2>
+    <p class="hero-description">
+        Aqui o PoolIQ não impõe um método fixo. Ele respeita o modelo do atleta, o nome real da fase, o foco da preparação e o perfil de carga para interpretar melhor o momento.
+    </p>
+</div>
+
+{% if db_error %}
+    <div class="error">
+        <strong>Erro de conexão com o banco:</strong><br>
+        {{ db_error }}
+    </div>
+{% endif %}
+
+<div class="brain-grid">
+    <div class="card full" style="margin:0;">
+        <div class="brain-panel">
+            <div class="metric-row">
+                <div class="label">Treino sugerido do dia</div>
+                <span class="pill {{ readiness_tone }}">{{ coach_focus.label }}</span>
+            </div>
+
+            <h3 class="brain-headline">{{ coach_focus.label }}</h3>
+            <p class="brain-description">{{ coach_focus.reason }}</p>
+
+            <div class="brain-block">
+                <div class="brain-kicker">Bloco principal sugerido</div>
+                <div class="brain-main-set">{{ main_set.title }}</div>
+                <p class="brain-detail">{{ main_set.detail }}</p>
+                <p class="brain-note">{{ main_set.note }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="brain-panel">
+        <div class="card tone-{{ shoulder_risk.tone }}" style="margin:0;">
+            <div class="metric-row">
+                <div class="label">Radar do ombro</div>
+                <span class="pill {{ shoulder_risk.tone }}">{{ shoulder_risk.label|capitalize }}</span>
+            </div>
+            <div class="value" style="font-size:36px;">{{ shoulder_risk.score }}</div>
+            <div class="subtext">{{ shoulder_risk.message }}</div>
+        </div>
+
+        <div class="card" style="margin:0;">
+            <div class="label">Pace target</div>
+            {% if pace_target %}
+                <div class="brain-target">
+                    <div class="brain-target-row">
+                        <div class="brain-target-label">Base recente</div>
+                        <div class="brain-target-value">{{ pace_target.baseline_label }}/100</div>
+                    </div>
+                    <div class="brain-target-row">
+                        <div class="brain-target-label">Alvo sugerido</div>
+                        <div class="brain-target-value">{{ pace_target.target_label }}/100</div>
+                    </div>
+                </div>
+            {% else %}
+                <p class="text">Ainda não há pace suficiente para sugerir alvo automático.</p>
+            {% endif %}
+        </div>
+
+        <div class="card" style="margin:0;">
+            <div class="label">DNA da última sessão</div>
+            <div class="value" style="font-size:30px;">{{ session_dna.label }}</div>
+            <div class="subtext">{{ session_dna.description }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="grid">
+    <div class="card">
+        <div class="label">Modelo do ciclo</div>
+        <div class="value" style="font-size:28px;">{{ cycle_model_label }}</div>
+        <div class="subtext">Estrutura de trabalho informada pelo atleta ou treinador.</div>
+    </div>
+
+    <div class="card">
+        <div class="label">Fase atual</div>
+        <div class="value" style="font-size:28px;">{{ phase_name_display }}</div>
+        <div class="subtext">Nome livre da fase, sem engessar a metodologia.</div>
+    </div>
+
+    <div class="card">
+        <div class="label">Foco da fase</div>
+        <div class="value" style="font-size:28px;">{{ phase_focus_label }}</div>
+        <div class="subtext">Direção principal que o ciclo está priorizando agora.</div>
+    </div>
+
+    <div class="card tone-{{ load_tone }}">
+        <div class="label">Perfil de carga</div>
+        <div class="value" style="font-size:28px;">{{ load_profile_label }}</div>
+        <div class="subtext">Como a fase está distribuindo volume e intensidade.</div>
+    </div>
+
+    <div class="card">
+        <div class="label">Prova-alvo</div>
+        <div class="value" style="font-size:28px;">{{ target_event_display }}</div>
+        <div class="subtext">Evento ou referência competitiva principal do momento.</div>
+    </div>
+
+    <div class="card">
+        <div class="label">Janela competitiva</div>
+        <div class="value" style="font-size:28px;">{{ weeks_to_race_display }}</div>
+        <div class="subtext">Quanto tempo falta até a prova ou checkpoint mais importante.</div>
+    </div>
+
+    <div class="card wide">
+        <div class="label">Suporte da fase</div>
+        <p class="text"><strong>{{ cycle_support.main_focus }}</strong></p>
+        <p class="subtext" style="margin-top:10px;">{{ cycle_support.load_guidance }}</p>
+        <p class="subtext">{{ cycle_support.risk_point }}</p>
+        <p class="subtext">{{ cycle_support.coach_note }}</p>
+    </div>
+
+    <div class="card tone-{{ readiness_tone }}">
+        <div class="metric-row">
+            <div class="label">Prontidão</div>
+            <span class="pill {{ readiness_tone }}">
+                {% if readiness_tone == 'good' %}Alta{% elif readiness_tone == 'info' %}Boa{% elif readiness_tone == 'warn' %}Cautela{% else %}Baixa{% endif %}
+            </span>
+        </div>
+        <div class="value">{% if readiness_score is not none %}{{ readiness_score }}{% else %}--{% endif %}</div>
+        <div class="subtext">Energia, sono, rigidez e sensibilidade integrados numa única leitura.</div>
+    </div>
+
+    <div class="card tone-info">
+        <div class="label">Modo do dia</div>
+        <div class="value" style="font-size:32px; line-height:1.15;">{{ day_mode }}</div>
+        <div class="subtext">Diretriz geral para orientar a sessão antes do primeiro bloco.</div>
+    </div>
+
+    <div class="card tone-{{ week_tone }}">
+        <div class="metric-row">
+            <div class="label">Semana</div>
+            <span class="pill {{ week_tone }}">{{ week_status }}</span>
+        </div>
+        <div class="value">{{ weekly_sessions }}/{{ weekly_goal }}</div>
+        <div class="subtext">Aderência atual: {{ adherence }}% da meta semanal.</div>
+    </div>
+
+    <div class="card">
+        <div class="label">Sessões totais</div>
+        <div class="value">{{ total_sessions }}</div>
+        <div class="subtext">Total de sessões já registradas no histórico do atleta.</div>
+    </div>
+
+    <div class="card">
+        <div class="label">Séries totais</div>
+        <div class="value">{{ total_sets }}</div>
+        <div class="subtext">Quantidade de blocos salvos e prontos para leitura.</div>
+    </div>
+
+    <div class="card wide tone-{{ pace_tone }}">
+        <div class="metric-row">
+            <div class="label">Insight principal</div>
+            <span class="pill {{ pace_tone }}">
+                {% if pace_tone == 'good' %}Estável{% elif pace_tone == 'warn' %}Oscilação{% elif pace_tone == 'danger' %}Queda forte{% else %}Leitura geral{% endif %}
+            </span>
+        </div>
+        <p class="text">{{ main_insight }}</p>
+    </div>
+
+    {% if latest_session %}
+        <div class="card">
+            <div class="label">Última sessão</div>
+            <div class="value" style="font-size:30px;">{{ latest_session.session_date }}</div>
+            <div class="subtext">
+                {% if latest_session.goal %}{{ latest_session.goal }}{% else %}Sem objetivo informado{% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="label">Volume da última sessão</div>
+            <div class="value">{{ last_session_volume }}</div>
+            <div class="subtext">metros totais registrados nas séries da última sessão.</div>
+        </div>
+
+        <div class="card">
+            <div class="label">Pace médio</div>
+            <div class="value">{{ last_session_avg_pace }}</div>
+            <div class="subtext">seg / 100m</div>
+        </div>
+
+        <div class="card">
+            <div class="label">Carga da sessão</div>
+            <div class="value">{{ last_session_load }}</div>
+            <div class="subtext">Volume x esforço percebido.</div>
+        </div>
+
+        <div class="card tone-{{ pace_tone }}">
+            <div class="label">Leitura do pace</div>
+            <p class="text">{{ last_session_pace_feedback }}</p>
+        </div>
+
+        <div class="card wide">
+            <div class="metric-row">
+                <div class="label">Resumo automático da última sessão</div>
+                <a class="small-link" href="{{ url_for('session_detail', session_id=latest_session.id) }}">Ver detalhes</a>
+            </div>
+            <p class="text">{{ last_session_summary }}</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

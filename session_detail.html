@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Sessão - PoolIQ{% endblock %}
+
+{% block content %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <div class="topbar">
+        <div>
+            <div class="title">Sessão</div>
+            <div class="subtitle">
+                {{ swim_session.session_date }}{% if swim_session.goal %} · {{ swim_session.goal }}{% endif %}
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="{{ url_for('add_set', session_id=swim_session.id) }}">Adicionar série</a>
+            <a href="{{ url_for('history') }}">Histórico</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+
+    <div class="hero-panel">
+        <div class="hero-kicker">Leitura completa da sessão</div>
+        <h2 class="hero-title">Uma visão refinada da carga, consistência e qualidade do treino.</h2>
+        <p class="hero-description">
+            O sistema resume o comportamento das séries, calcula volume e pace médio e já sinaliza estabilidade ou queda de rendimento.
+        </p>
+
+        <div class="actions-row" style="margin-top:20px;">
+            <form method="POST" action="{{ url_for('delete_session', session_id=swim_session.id) }}" onsubmit="return confirmDelete('Apagar essa sessão inteira e todas as séries?');">
+                <button class="danger-btn" type="submit">Apagar sessão</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="grid" style="margin-bottom: 20px;">
+        <div class="card tone-{{ readiness_tone }}">
+            <div class="label">Estado base da sessão</div>
+            <div class="value" style="font-size:30px;">
+                {% if readiness_tone == 'good' %}
+                    Forte
+                {% elif readiness_tone == 'info' %}
+                    Bom
+                {% elif readiness_tone == 'warn' %}
+                    Cautela
+                {% else %}
+                    Sensível
+                {% endif %}
+            </div>
+            <div class="subtext">Leitura derivada dos dados prévios registrados antes do treino.</div>
+        </div>
+
+        <div class="card">
+            <div class="label">Volume total</div>
+            <div class="value">{{ total_volume }}</div>
+            <div class="subtext">metros</div>
+        </div>
+
+        <div class="card">
+            <div class="label">Pace médio</div>
+            <div class="value">{{ avg_pace_per_100 }}</div>
+            <div class="subtext">seg / 100</div>
+        </div>
+
+        <div class="card">
+            <div class="label">RPE médio</div>
+            <div class="value">{{ avg_rpe }}</div>
+            <div class="subtext">esforço percebido médio da sessão</div>
+        </div>
+
+        <div class="card">
+            <div class="label">Carga da sessão</div>
+            <div class="value">{{ session_load }}</div>
+            <div class="subtext">volume multiplicado pelo RPE médio</div>
+        </div>
+
+        <div class="card tone-{{ pace_tone }}">
+            <div class="metric-row">
+                <div class="label">Leitura do pace</div>
+                <span class="pill {{ pace_tone }}">
+                    {% if pace_tone == 'good' %}
+                        Estável
+                    {% elif pace_tone == 'warn' %}
+                        Leve queda
+                    {% elif pace_tone == 'danger' %}
+                        Queda forte
+                    {% else %}
+                        Parcial
+                    {% endif %}
+                </span>
+            </div>
+            <p class="text">{{ pace_feedback }}</p>
+        </div>
+
+        <div class="card wide">
+            <div class="label">Resumo automático</div>
+            <p class="text">{{ session_summary }}</p>
+        </div>
+    </div>
+
+    <div class="grid" style="margin-bottom: 20px;">
+        <div class="card wide">
+            <div class="metric-row">
+                <div class="label">Gráfico de pace da sessão</div>
+                <span class="pill info">Série a série</span>
+            </div>
+
+            {% if pace_values %}
+                <div class="chart-shell">
+                    <canvas id="paceChart"></canvas>
+                </div>
+            {% else %}
+                <p class="text">Adicione séries para gerar o gráfico automático de pace.</p>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <div class="label">Contexto prévio</div>
+            <div class="meta-list">
+                <div class="meta-row">
+                    <div class="meta-key">Energia</div>
+                    <div class="meta-value">{{ swim_session.energy_level or "Não informada" }}</div>
+                </div>
+                <div class="meta-row">
+                    <div class="meta-key">Sono</div>
+                    <div class="meta-value">{{ swim_session.sleep_hours or "Não informado" }}</div>
+                </div>
+                <div class="meta-row">
+                    <div class="meta-key">Motivação</div>
+                    <div class="meta-value">{{ swim_session.motivation_level or "Não informada" }}</div>
+                </div>
+                <div class="meta-row">
+                    <div class="meta-key">Sensibilidade</div>
+                    <div class="meta-value">{{ swim_session.pain_area or "Não informada" }}</div>
+                </div>
+                <div class="meta-row">
+                    <div class="meta-key">Rigidez</div>
+                    <div class="meta-value">
+                        {{ swim_session.stiffness_level if swim_session.stiffness_level is not none else "Não informada" }}
+                    </div>
+                </div>
+                <div class="meta-row">
+                    <div class="meta-key">Ombro</div>
+                    <div class="meta-value">
+                        {{ swim_session.shoulder_pain_level if swim_session.shoulder_pain_level is not none else "Não informado" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if sets_data %}
+        <div class="grid">
+            {% for item in sets_data %}
+                <div class="card">
+                    <div class="set-card-top">
+                        <div>
+                            <div class="label">{{ item.stroke }}</div>
+                            <h3 class="set-main-title">{{ item.reps }}x{{ item.distance_m }}</h3>
+                            <div class="subtext">{{ item.course_type or "Piscina não informada" }}</div>
+                        </div>
+
+                        <span class="pill info">RPE {{ item.effort_rpe }}</span>
+                    </div>
+
+                    <div class="meta-list">
+                        <div class="meta-row">
+                            <div class="meta-key">Tempo médio</div>
+                            <div class="meta-value">{{ item.avg_time_seconds }} s</div>
+                        </div>
+
+                        <div class="meta-row">
+                            <div class="meta-key">Pace / 100</div>
+                            <div class="meta-value">{{ item.pace_per_100 }} s</div>
+                        </div>
+
+                        <div class="meta-row">
+                            <div class="meta-key">Descanso</div>
+                            <div class="meta-value">{{ item.rest_seconds }} s</div>
+                        </div>
+
+                        <div class="meta-row">
+                            <div class="meta-key">Observações</div>
+                            <div class="meta-value">{{ item.notes or "Sem observações" }}</div>
+                        </div>
+                    </div>
+
+                    <div class="actions-row">
+                        <form method="POST" action="{{ url_for('delete_set', set_id=item.id) }}" onsubmit="return confirmDelete('Apagar essa série?');">
+                            <button class="danger-btn" type="submit">Apagar série</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card full">
+            <div class="label">Séries</div>
+            <p class="text">Essa sessão ainda não tem séries cadastradas.</p>
+            <div class="actions-row">
+                <a class="action-btn" href="{{ url_for('add_set', session_id=swim_session.id) }}">Adicionar primeira série</a>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if pace_values %}
+        <script id="pace-labels-data" type="application/json">
+            {{ pace_labels | tojson }}
+        </script>
+
+        <script id="pace-values-data" type="application/json">
+            {{ pace_values | tojson }}
+        </script>
+
+        <script>
+            const labelsDataElement = document.getElementById("pace-labels-data");
+            const valuesDataElement = document.getElementById("pace-values-data");
+            const chartCanvas = document.getElementById("paceChart");
+
+            if (labelsDataElement && valuesDataElement && chartCanvas) {
+                const paceLabels = JSON.parse(labelsDataElement.textContent);
+                const paceValues = JSON.parse(valuesDataElement.textContent);
+
+                new Chart(chartCanvas, {
+                    type: "line",
+                    data: {
+                        labels: paceLabels,
+                        datasets: [{
+                            label: "Pace / 100",
+                            data: paceValues,
+                            borderWidth: 3,
+                            tension: 0.35,
+                            fill: true,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: "#dfe7ff",
+                                    font: {
+                                        weight: "700"
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    color: "#b8c4ea"
+                                },
+                                grid: {
+                                    color: "rgba(255,255,255,0.06)"
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    color: "#b8c4ea"
+                                },
+                                grid: {
+                                    color: "rgba(255,255,255,0.06)"
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        </script>
+    {% endif %}
+{% endblock %}
